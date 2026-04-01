@@ -7,9 +7,10 @@ type MessagesViewProps = {
   conversations: Conversation[];
   products: Product[];
   onSendMessage: (conversationId: string, text: string) => void;
+  currentUser?: any;
 };
 
-export default function MessagesView({ conversations, products, onSendMessage }: MessagesViewProps) {
+export default function MessagesView({ conversations, products, onSendMessage, currentUser }: MessagesViewProps) {
   const [activeConvId, setActiveConvId] = useState<string | null>(
     conversations.length > 0 ? conversations[0].id : null
   );
@@ -112,10 +113,10 @@ export default function MessagesView({ conversations, products, onSendMessage }:
           )}
         </div>
 
-        {/* Chat Messages */}
         <div className="flex-1 p-6 overflow-y-auto bg-slate-50/50 space-y-6">
           {activeConv.messages.map((msg) => {
-            const isMe = msg.sender === "You";
+            const myName = currentUser?.name || "Local User";
+            const isMe = msg.sender === myName || msg.sender === "You";
             return (
               <div key={msg.id} className={cn("flex flex-col max-w-[75%]", isMe ? "ml-auto items-end" : "mr-auto items-start")}>
                 <div 

@@ -78,7 +78,7 @@ export default function App() {
 
     const newMsg: Message = {
       id: msgId,
-      sender: "You",
+      sender: currentUser?.name || "Local User",
       text,
       timestamp: new Date().toISOString()
     };
@@ -436,6 +436,7 @@ export default function App() {
               const conv = conversations.find(c => c.id === cid);
               if (conv) sendChatMessage(cid, conv.productId, conv.owner, text);
             }} 
+            currentUser={currentUser}
           />
         )}
 
