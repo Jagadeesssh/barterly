@@ -497,15 +497,6 @@ export default function App() {
         © 2025 Barterly. Built for a sustainable future.
       </footer>
 
-      {/* ✅ LOGIN MODAL */}
-      <AnimatePresence>
-        {isLoginOpen && (
-          <Login 
-            onClose={() => setIsLoginOpen(false)} 
-            onLogin={() => { setIsLoggedIn(true); setIsLoginOpen(false); toast.success("Logged in successfully!"); }}
-          />
-        )}
-      </AnimatePresence>
 
       {/* ✅ LOGIN MODAL */}
       <AnimatePresence>

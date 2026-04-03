@@ -40,6 +40,22 @@ export default function MessagesView({ conversations, products, onSendMessage, c
     setDraft("");
   };
 
+  const getDisplayName = (conv: Conversation) => {
+    const myName = currentUser?.name || "Local User";
+    const myNameAlt = "You (Local User)";
+    
+    // If we are NOT the owner, the other party is the owner.
+    if (conv.owner !== myName && conv.owner !== myNameAlt && conv.owner !== "You" && conv.owner !== "Local User") {
+      return conv.owner;
+    }
+    
+    // If we ARE the owner, the other party is the sender of the first message that isn't us.
+    const otherMsg = conv.messages.find(m => m.sender !== myName && m.sender !== myNameAlt && m.sender !== "You" && m.sender !== "Local User");
+    
+    // Default fallback to "Unknown" if both fail 
+    return otherMsg ? otherMsg.sender : (myName === "Local User" ? "Another User" : "Unknown");
+  };
+
   return (
     <div className="bg-white rounded-3xl shadow-sm border overflow-hidden flex h-[80vh] min-h-[600px] mb-10">
       
@@ -72,7 +88,7 @@ export default function MessagesView({ conversations, products, onSendMessage, c
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-baseline mb-1">
-                    <h4 className="font-bold text-slate-900 truncate">{conv.owner}</h4>
+                    <h4 className="font-bold text-slate-900 truncate">{getDisplayName(conv)}</h4>
                     <span className="text-xs text-slate-400 shrink-0">{new Date(conv.lastUpdated).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                   </div>
                   <p className="text-xs text-indigo-600 font-semibold truncate mb-1 border border-indigo-100 bg-indigo-50/50 inline-block px-2 py-0.5 rounded-full">
@@ -93,10 +109,10 @@ export default function MessagesView({ conversations, products, onSendMessage, c
         <div className="p-4 px-6 border-b border-slate-100 flex items-center justify-between bg-white shadow-sm z-10 relative">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-indigo-100 text-indigo-700 font-bold text-xl rounded-full flex items-center justify-center">
-              {activeConv.owner.charAt(0)}
+              {getDisplayName(activeConv).charAt(0).toUpperCase()}
             </div>
             <div>
-              <h3 className="font-bold text-lg text-slate-900">{activeConv.owner}</h3>
+              <h3 className="font-bold text-lg text-slate-900">{getDisplayName(activeConv)}</h3>
               <p className="text-sm text-emerald-600 font-medium flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span> Online
               </p>
@@ -116,7 +132,8 @@ export default function MessagesView({ conversations, products, onSendMessage, c
         <div className="flex-1 p-6 overflow-y-auto bg-slate-50/50 space-y-6">
           {activeConv.messages.map((msg) => {
             const myName = currentUser?.name || "Local User";
-            const isMe = msg.sender === myName || msg.sender === "You";
+            const myNameAlt = "You (Local User)";
+            const isMe = msg.sender === myName || msg.sender === myNameAlt || msg.sender === "You" || msg.sender === "Local User" && myName === "Local User";
             return (
               <div key={msg.id} className={cn("flex flex-col max-w-[75%]", isMe ? "ml-auto items-end" : "mr-auto items-start")}>
                 <div 
