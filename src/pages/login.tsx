@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, Loader2 } from "lucide-react";
+import { X, Loader2, Eye, EyeOff } from "lucide-react";
 import { toast } from "react-hot-toast";
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -17,6 +17,7 @@ export default function Login({ onClose, onLogin }: LoginProps) {
   const [isVerify, setIsVerify] = useState(false);
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -239,14 +240,23 @@ export default function Login({ onClose, onLogin }: LoginProps) {
             <label className="block mb-2 text-sm font-bold text-slate-700 dark:text-slate-300">
               Password
             </label>
-            <input
-              type="password"
-              minLength={5}
-              placeholder="••••••••"
-              className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-colors dark:text-white"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                minLength={5}
+                placeholder="••••••••"
+                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-colors dark:text-white pr-12"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <button
+                type="button"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-500 transition-colors"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
           </div>
 
           {/* Button */}
