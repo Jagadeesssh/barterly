@@ -56,37 +56,19 @@ app.post('/api/auth/register', async (req, res) => {
       return res.status(400).json({ message: 'User already exists and is verified' });
     }
     
-    // Generate 6 digit OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
-
     if (user) {
-      // User exists but not verified, update OTP
-      user.name = name;
-      user.password = password;
-      user.otp = otp;
-      user.otpExpires = otpExpires;
-      await user.save();
+      // User exists, update password if needed or just return error
+      return res.status(400).json({ message: 'User already exists' });
     } else {
-      user = await User.create({ name, email, password, otp, otpExpires, isVerified: false });
+      user = await User.create({ name, email, password, isVerified: true });
     }
 
-    // Send email
-    try {
-      await sendEmail({
-        email: user.email,
-        subject: 'Barterly Account Verification OTP',
-        message: `Your verification OTP is: ${otp}. It will expire in 10 minutes.`,
-      });
-      res.status(200).json({ message: 'Verification OTP sent to email', email: user.email });
-    } catch (emailError) {
-      console.error(emailError);
-      // Clean up otp if email fails
-      user.otp = undefined;
-      user.otpExpires = undefined;
-      await user.save();
-      return res.status(500).json({ message: `Critical Error: ${emailError.message}. Check your Render Environment Variables.` });
-    }
+    res.status(201).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      token: generateToken(user._id)
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -124,9 +106,6 @@ app.post('/api/auth/login', async (req, res) => {
     const user = await User.findOne({ email });
     
     if (user && (await user.matchPassword(password))) {
-      if (!user.isVerified) {
-        return res.status(401).json({ message: 'Please verify your email to login. Check your inbox for the OTP.' });
-      }
       res.json({
         _id: user._id,
         name: user.name,

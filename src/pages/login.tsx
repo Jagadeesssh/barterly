@@ -47,19 +47,14 @@ export default function Login({ onClose, onLogin }: LoginProps) {
         throw new Error(data.message || 'Authentication failed');
       }
 
-      if (isRegister) {
-        toast.success("OTP sent to your email. Please verify.");
-        setIsVerify(true);
-      } else {
-        // Success
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data));
-        
-        toast.success("Welcome Back 👋");
-        
-        if (onLogin) onLogin(data);
-        else if (onClose) onClose();
-      }
+      // Success (for both login and register)
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data));
+      
+      toast.success(isRegister ? "Account created successfully! ✨" : "Welcome Back 👋");
+      
+      if (onLogin) onLogin(data);
+      else if (onClose) onClose();
 
     } catch (err: any) {
       toast.error(err.message || 'Authentication failed');
@@ -164,46 +159,8 @@ export default function Login({ onClose, onLogin }: LoginProps) {
           </p>
         </div>
 
-        {isVerify ? (
-          <form onSubmit={handleVerify} className="space-y-5">
-            <div className="text-center mb-6 text-sm text-slate-600 dark:text-slate-300">
-              We've sent a 6-digit verification code to <strong>{email}</strong>.
-            </div>
-            <div>
-              <label className="block mb-2 text-sm font-bold text-slate-700 dark:text-slate-300">
-                Enter Verification Code
-              </label>
-              <input
-                type="text"
-                placeholder="123456"
-                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-colors dark:text-white tracking-widest text-center text-lg font-mono"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                maxLength={6}
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 text-white py-3.5 rounded-xl font-bold hover:shadow-lg hover:-translate-y-0.5 transition-all text-sm tracking-wide flex justify-center items-center gap-2 disabled:opacity-70 disabled:hover:translate-y-0"
-            >
-              {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-              {isLoading ? "Verifying..." : "Verify Account"}
-            </button>
-            <p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-4 font-medium">
-              Didn't receive the code?{" "}
-              <button 
-                type="button"
-                className="text-indigo-600 dark:text-indigo-400 cursor-pointer hover:underline font-bold disabled:opacity-50"
-                onClick={handleResendOTP}
-                disabled={isLoading}
-              >
-                Resend OTP
-              </button>
-            </p>
-          </form>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-5">
+        {/* Login/Register Form */}
+        <form onSubmit={handleSubmit} className="space-y-5">
 
           {/* Name - Only for Register */}
           {isRegister && (
@@ -269,20 +226,17 @@ export default function Login({ onClose, onLogin }: LoginProps) {
             {isLoading ? "Processing..." : isRegister ? "Create Account" : "Secure Login"}
           </button>
           </form>
-        )}
 
         {/* Toggle Register/Login Link */}
-        {!isVerify && (
-          <p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-8 font-medium">
-            {isRegister ? "Already registered?" : "Don't have an account?"}{" "}
-            <span 
-              className="text-indigo-600 dark:text-indigo-400 cursor-pointer hover:underline font-bold"
-              onClick={() => setIsRegister(!isRegister)}
-            >
-              {isRegister ? "Login here" : "Register now"}
-            </span>
-          </p>
-        )}
+        <p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-8 font-medium">
+          {isRegister ? "Already registered?" : "Don't have an account?"}{" "}
+          <span 
+            className="text-indigo-600 dark:text-indigo-400 cursor-pointer hover:underline font-bold"
+            onClick={() => setIsRegister(!isRegister)}
+          >
+            {isRegister ? "Login here" : "Register now"}
+          </span>
+        </p>
       </div>
     </div>
   );
