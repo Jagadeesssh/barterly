@@ -78,7 +78,7 @@ export default function App() {
 
     const newMsg: Message = {
       id: msgId,
-      sender: currentUser?.name || "Local User",
+      sender: "You",
       text,
       timestamp: new Date().toISOString()
     };
@@ -436,7 +436,6 @@ export default function App() {
               const conv = conversations.find(c => c.id === cid);
               if (conv) sendChatMessage(cid, conv.productId, conv.owner, text);
             }} 
-            currentUser={currentUser}
           />
         )}
 
@@ -497,6 +496,15 @@ export default function App() {
         © 2025 Barterly. Built for a sustainable future.
       </footer>
 
+      {/* ✅ LOGIN MODAL */}
+      <AnimatePresence>
+        {isLoginOpen && (
+          <Login 
+            onClose={() => setIsLoginOpen(false)} 
+            onLogin={() => { setIsLoggedIn(true); setIsLoginOpen(false); toast.success("Logged in successfully!"); }}
+          />
+        )}
+      </AnimatePresence>
 
       {/* ✅ LOGIN MODAL */}
       <AnimatePresence>

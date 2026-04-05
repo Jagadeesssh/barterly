@@ -13,6 +13,7 @@ const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const cloudinary = require('cloudinary').v2;
 
 dotenv.config();
+const sendEmail = require('./utils/sendEmail');
 
 // Cloudinary Configuration
 cloudinary.config({
@@ -50,20 +51,68 @@ const generateToken = (id) => {
 app.post('/api/auth/register', async (req, res) => {
   try {
     const { name, email, password } = req.body;
-    const userExists = await User.findOne({ email });
-    if (userExists) return res.status(400).json({ message: 'User already exists' });
-    
-    const user = await User.create({ name, email, password });
-    if (user) {
-      res.status(201).json({
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        token: generateToken(user._id)
-      });
-    } else {
-      res.status(400).json({ message: 'Invalid user data' });
+    let user = await User.findOne({ email });
+    if (user && user.isVerified) {
+      return res.status(400).json({ message: 'User already exists and is verified' });
     }
+    
+    // Generate 6 digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
+
+    if (user) {
+      // User exists but not verified, update OTP
+      user.name = name;
+      user.password = password;
+      user.otp = otp;
+      user.otpExpires = otpExpires;
+      await user.save();
+    } else {
+      user = await User.create({ name, email, password, otp, otpExpires, isVerified: false });
+    }
+
+    // Send email
+    try {
+      await sendEmail({
+        email: user.email,
+        subject: 'Barterly Account Verification OTP',
+        message: `Your verification OTP is: ${otp}. It will expire in 10 minutes.`,
+      });
+      res.status(200).json({ message: 'Verification OTP sent to email', email: user.email });
+    } catch (emailError) {
+      console.error(emailError);
+      // Clean up otp if email fails
+      user.otp = undefined;
+      user.otpExpires = undefined;
+      await user.save();
+      return res.status(500).json({ message: 'Error sending email' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+app.post('/api/auth/verify', async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user) return res.status(400).json({ message: 'User not found' });
+    if (user.isVerified) return res.status(400).json({ message: 'User already verified' });
+    if (user.otp !== otp) return res.status(400).json({ message: 'Invalid OTP' });
+    if (user.otpExpires < Date.now()) return res.status(400).json({ message: 'OTP expired' });
+
+    user.isVerified = true;
+    user.otp = undefined;
+    user.otpExpires = undefined;
+    await user.save();
+
+    res.json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      token: generateToken(user._id)
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -75,6 +124,9 @@ app.post('/api/auth/login', async (req, res) => {
     const user = await User.findOne({ email });
     
     if (user && (await user.matchPassword(password))) {
+      if (!user.isVerified) {
+        return res.status(401).json({ message: 'Please verify your email to login. Check your inbox for the OTP.' });
+      }
       res.json({
         _id: user._id,
         name: user.name,
@@ -83,6 +135,39 @@ app.post('/api/auth/login', async (req, res) => {
       });
     } else {
       res.status(401).json({ message: 'Invalid email or password' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+app.post('/api/auth/resend-otp', async (req, res) => {
+  try {
+    const { email } = req.body;
+    let user = await User.findOne({ email });
+
+    if (!user) return res.status(400).json({ message: 'User not found' });
+    if (user.isVerified) return res.status(400).json({ message: 'User is already verified' });
+
+    // Generate new 6 digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
+
+    user.otp = otp;
+    user.otpExpires = otpExpires;
+    await user.save();
+
+    // Send email
+    try {
+      await sendEmail({
+        email: user.email,
+        subject: 'Barterly Verification - Resend OTP',
+        message: `Your new verification OTP is: ${otp}. It will expire in 10 minutes.`,
+      });
+      res.status(200).json({ message: 'A new verification OTP has been sent to your email' });
+    } catch (emailError) {
+      console.error(emailError);
+      return res.status(500).json({ message: 'Error sending email' });
     }
   } catch (error) {
     res.status(500).json({ message: error.message });
