@@ -11,9 +11,7 @@ const bcrypt = require('bcryptjs');
 const multer = require('multer');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const cloudinary = require('cloudinary').v2;
-
 dotenv.config();
-const sendEmail = require('./utils/sendEmail');
 
 // Cloudinary Configuration
 cloudinary.config({
