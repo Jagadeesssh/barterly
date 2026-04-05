@@ -85,7 +85,7 @@ app.post('/api/auth/register', async (req, res) => {
       user.otp = undefined;
       user.otpExpires = undefined;
       await user.save();
-      return res.status(500).json({ message: 'Error sending email' });
+      return res.status(500).json({ message: `Critical Error: ${emailError.message}. Check your Render Environment Variables.` });
     }
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -167,7 +167,7 @@ app.post('/api/auth/resend-otp', async (req, res) => {
       res.status(200).json({ message: 'A new verification OTP has been sent to your email' });
     } catch (emailError) {
       console.error(emailError);
-      return res.status(500).json({ message: 'Error sending email' });
+      return res.status(500).json({ message: `Resend Error: ${emailError.message}` });
     }
   } catch (error) {
     res.status(500).json({ message: error.message });
