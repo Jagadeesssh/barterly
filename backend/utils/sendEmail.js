@@ -3,14 +3,13 @@ const nodemailer = require('nodemailer');
 const sendEmail = async (options) => {
   const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
-    family: 4, // Force IPv4 to prevent Render timeout bugs
+    port: 587,
+    secure: false, // true for 465, false for other ports
+    family: 4, // Force IPv4
     auth: {
       user: process.env.SMTP_EMAIL,
       pass: process.env.SMTP_PASSWORD,
     },
-    // Adding this fixes ETIMEDOUT issues on some cloud providers like Render
     tls: {
       rejectUnauthorized: false
     }
@@ -24,7 +23,15 @@ const sendEmail = async (options) => {
     html: options.html,
   };
 
-  await transporter.sendMail(mailOptions);
+  // Add a 10 second timeout so the backend never hangs indefinitely!
+  const timeoutPromise = new Promise((_, reject) => 
+    setTimeout(() => reject(new Error('Email server timed out. Gmail might be blocking your Render IP.')), 10000)
+  );
+
+  await Promise.race([
+    transporter.sendMail(mailOptions),
+    timeoutPromise
+  ]);
 };
 
 module.exports = sendEmail;
